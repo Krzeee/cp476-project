@@ -10,5 +10,3 @@
     - Activity blog/wiki (Trenton)
     - User Story Ideas (Nanditha)
     - Project Proposal (Derek)
-
-
