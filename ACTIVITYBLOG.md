@@ -1,5 +1,5 @@
 # Activity Blog
-## 2026/01/27
+## 2026/01/27 (45 Minutes)
 - Started project proposal
 - Created story ideas
 - Divided work among group members/assigned roles
