@@ -1,0 +1,21 @@
+# Tables
+
+- Users
+    - Username/UserID (primary key)
+    - DisplayName
+    - PasswordHash
+- Boards
+    - BoardID
+    - Admins
+- Posts
+    - PostID
+    - Board
+    - Author
+    - Content
+    - CreationDate
+- Replies
+    - ReplyID
+    - ParentID
+    - Author
+    - Content
+    - CreationDate
