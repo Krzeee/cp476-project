@@ -149,11 +149,20 @@ document.addEventListener("DOMContentLoaded", function () {
             currentPost.comments.push(commentText);
             document.getElementById("newComment").value = "";
 
-            saveData();
-            openViewModal(currentPost);
-            renderPosts();
-        }
-    });
-
-    renderPosts();
+        updatePreviewCounts();
+    }
 });
+
+
+// --------------------
+// UPDATE PREVIEW COUNTS (Post Card)
+// --------------------
+
+function updatePreviewCounts() {
+
+    let commentPreview = currentPost.querySelector(".comment-preview");
+    let likePreview = currentPost.querySelector(".like-preview");
+
+    commentPreview.innerText = `💬 ${currentPost.postData.comments.length} comments`;
+    likePreview.innerText = `👍 ${currentPost.postData.likes} likes`;
+}
