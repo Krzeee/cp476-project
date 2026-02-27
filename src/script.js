@@ -1,184 +1,334 @@
-document.addEventListener("DOMContentLoaded", function () {
-  let loggedInUser = localStorage.getItem("loggedInUser");
-
+// script.js
+document.addEventListener("DOMContentLoaded", () => {
+  // -----------------------
+  // AUTH & LOGOUT
+  // -----------------------
+  const loggedInUser = localStorage.getItem("loggedInUser");
   if (!loggedInUser) {
     window.location.href = "login.html";
     return;
   }
 
-  document.getElementById("logoutBtn").addEventListener("click", function () {
+  document.getElementById("logoutBtn")?.addEventListener("click", () => {
     localStorage.removeItem("loggedInUser");
     window.location.href = "login.html";
   });
-});
 
-document.addEventListener("DOMContentLoaded", function () {
-  // DETERMINE CURRENT CHANNEL FROM PAGE
-  let currentChannel = document.getElementById("currentChannelTitle").innerText;
-  let currentPost = null;
+  // -----------------------
+  // DOM ELEMENTS
+  // -----------------------
+  const myBoardsList = document.getElementById("myBoards");
+  const availableBoardsList = document.getElementById("availableBoards");
+  const createBoardBtn = document.getElementById("createBoardBtn");
+  const postsContainer = document.getElementById("postsContainer");
+  const joinLeaveBtn = document.getElementById("joinLeaveBtn");
 
-  // Load saved posts or initialize empty
-  let channels = JSON.parse(localStorage.getItem("channels")) || {
-    "Main Page": [],
-    "Channel One": [],
-    "Channel Two": [],
-    "Channel Three": [],
-    "Channel Four": [],
-    "Channel Five": [],
-  };
+  // -----------------------
+  // LOAD BOARDS
+  // -----------------------
+  let boards = [];
+  const stored = localStorage.getItem("boards");
 
-  if (!channels[currentChannel]) {
-    channels[currentChannel] = [];
-    localStorage.setItem("channels", JSON.stringify(channels));
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      boards = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      boards = [];
+    }
   }
 
-  // Make sure channel exists
-  if (!channels[currentChannel]) {
-    channels[currentChannel] = [];
+  // Ensure "Main Page" exists and everyone follows it
+  if (!boards.some((b) => b.name === "Main Page")) {
+    boards.unshift({
+      name: "Main Page",
+      creator: "system",
+      joinedUsers: [loggedInUser],
+      posts: [],
+    });
+  } else {
+    // Make sure current user is following Main Page
+    const mainPage = boards.find((b) => b.name === "Main Page");
+    if (!mainPage.joinedUsers) mainPage.joinedUsers = [];
+    if (!mainPage.joinedUsers.includes(loggedInUser)) {
+      mainPage.joinedUsers.push(loggedInUser);
+    }
   }
 
-  // SAVE TO LOCAL STORAGE --> for now connect to database
-  function saveData() {
-    localStorage.setItem("channels", JSON.stringify(channels));
+  function saveBoards() {
+    localStorage.setItem("boards", JSON.stringify(boards));
   }
 
-  // RENDER POSTS
-  function renderPosts() {
-    let container = document.getElementById("postsContainer");
-    container.innerHTML = "";
+  // -----------------------
+  // CURRENT BOARD (for posts page)
+  // -----------------------
+  const currentBoardName = localStorage.getItem("currentBoard") || "Main Page";
+  let currentBoard = boards.find((b) => b.name === currentBoardName);
 
-    channels[currentChannel].forEach((post) => {
-      let postDiv = document.createElement("div");
-      postDiv.classList.add("post");
+  if (!currentBoard) {
+    currentBoard = {
+      name: currentBoardName,
+      creator: loggedInUser,
+      joinedUsers: [loggedInUser],
+      posts: [],
+    };
+    boards.push(currentBoard);
+    saveBoards();
+  }
 
-      postDiv.innerHTML = `
-                <div class="post-text">
-                    <h4>${post.title}</h4>
-                    <p>${post.body}</p>
-                </div>
-                <div class="post-meta">
-                    <span>💬 ${post.comments.length} comments</span>
-                    <span>👍 ${post.likes} likes</span>
-                </div>
-            `;
+  if (!currentBoard.joinedUsers)
+    currentBoard.joinedUsers = [currentBoard.creator];
 
-      postDiv.addEventListener("click", function () {
-        openViewModal(post);
+  // -----------------------
+  // SIDEBAR (Boards / Join a Board)
+  // -----------------------
+  if (myBoardsList && availableBoardsList) {
+    function renderSidebar() {
+      myBoardsList.innerHTML = "";
+      availableBoardsList.innerHTML = "";
+
+      boards.forEach((board, index) => {
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = "#";
+        link.textContent = board.name;
+        link.addEventListener("click", () => openBoard(board.name));
+
+        // Boards the user has joined
+        if (
+          board.joinedUsers.includes(loggedInUser) ||
+          board.creator === loggedInUser
+        ) {
+          li.appendChild(link);
+          myBoardsList.appendChild(li);
+        } else {
+          // Boards user can join
+          const joinLi = document.createElement("li");
+          const joinLink = document.createElement("a");
+          joinLink.href = "#";
+          joinLink.textContent = `→ ${board.name}`;
+          joinLink.addEventListener("click", () => openBoard(board.name));
+          joinLi.appendChild(joinLink);
+          availableBoardsList.appendChild(joinLi);
+        }
+      });
+    }
+
+    function createBoard() {
+      const name = prompt("Enter new board name:");
+      if (!name) return;
+
+      if (boards.some((b) => b.name === name)) {
+        alert("Board already exists!");
+        return;
+      }
+
+      boards.push({
+        name,
+        creator: loggedInUser,
+        joinedUsers: [loggedInUser],
+        posts: [],
       });
 
-      container.appendChild(postDiv);
-    });
+      saveBoards();
+      renderSidebar();
+    }
+
+    function joinBoard(index) {
+      const board = boards[index];
+      if (!board.joinedUsers.includes(loggedInUser)) {
+        board.joinedUsers.push(loggedInUser);
+        saveBoards();
+        renderSidebar();
+        // Update join/leave button if on this board
+        if (board.name === currentBoardName && joinLeaveBtn) {
+          updateJoinLeaveButtonText();
+        }
+      }
+    }
+
+    function openBoard(name) {
+      localStorage.setItem("currentBoard", name);
+      window.location.href = "index.html";
+    }
+
+    createBoardBtn?.addEventListener("click", createBoard);
+    renderSidebar();
   }
 
-  // CREATE POST
-  function openModal() {
-    document.getElementById("modalOverlay").style.display = "flex";
-  }
+  // -----------------------
+  // POSTS (only if postsContainer exists)
+  // -----------------------
+  let currentPost = null;
 
-  function closeModal() {
-    document.getElementById("modalOverlay").style.display = "none";
-  }
+  if (postsContainer) {
+    document.getElementById("currentBoardTitle").textContent = currentBoardName;
 
-  document.querySelector(".post-btn").addEventListener("click", openModal);
+    function renderPosts() {
+      postsContainer.innerHTML = "";
+      currentBoard.posts.forEach((post) => {
+        const postDiv = document.createElement("div");
+        postDiv.classList.add("post");
+        postDiv.innerHTML = `
+          <div class="post-text">
+            <h4>${post.title}</h4>
+            <p>${post.body}</p>
+          </div>
+          <div class="post-meta">
+            <span>💬 ${post.comments.length} comments</span>
+            <span>👍 ${post.likes} likes</span>
+          </div>
+        `;
+        postDiv.addEventListener("click", () => openViewModal(post));
+        postsContainer.appendChild(postDiv);
+      });
+    }
 
-  document
-    .getElementById("postForm")
-    .addEventListener("submit", function (event) {
-      event.preventDefault();
+    renderPosts();
 
-      let title = document.getElementById("postTitle").value;
-      let body = document.getElementById("postBody").value;
+    // -----------------------
+    // POST MODAL
+    // -----------------------
+    const modalOverlay = document.getElementById("modalOverlay");
+    const postForm = document.getElementById("postForm");
 
-      let newPost = {
-        title: title,
-        body: body,
+    function openModal() {
+      modalOverlay.style.display = "flex";
+    }
+    function closeModal() {
+      modalOverlay.style.display = "none";
+    }
+
+    document
+      .querySelector("#modalOverlay .cancel-btn")
+      ?.addEventListener("click", () => {
+        closeModal();
+        postForm.reset();
+      });
+
+    document.querySelector(".post-btn")?.addEventListener("click", openModal);
+
+    postForm?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title = document.getElementById("postTitle").value;
+      const body = document.getElementById("postBody").value;
+      currentBoard.posts.push({
+        title,
+        body,
         hearts: 0,
         likes: 0,
         comments: [],
-      };
-
-      channels[currentChannel].push(newPost);
-
-      saveData();
+      });
+      saveBoards();
       renderPosts();
       closeModal();
-      this.reset();
+      postForm.reset();
     });
 
-  // VIEW POST
-  function openViewModal(post) {
-    currentPost = post;
+    // -----------------------
+    // VIEW POST MODAL
+    // -----------------------
+    const viewModal = document.getElementById("viewModal");
+    const viewTitle = document.getElementById("viewTitle");
+    const viewBody = document.getElementById("viewBody");
+    const commentList = document.getElementById("commentList");
+    const newComment = document.getElementById("newComment");
+    const heartBtn = document.getElementById("heartBtn");
+    const likeBtn = document.getElementById("likeBtn");
+    const addCommentBtn = document.getElementById("addCommentBtn");
 
-    document.getElementById("viewTitle").innerText = post.title;
-    document.getElementById("viewBody").innerText = post.body;
+    function openViewModal(post) {
+      currentPost = post;
+      viewTitle.innerText = post.title;
+      viewBody.innerText = post.body;
 
-    document.getElementById("heartCount").innerText = post.hearts;
-    document.getElementById("likeCount").innerText = post.likes;
+      document.getElementById("heartCount").innerText = post.hearts;
+      document.getElementById("likeCount").innerText = post.likes;
 
-    let commentList = document.getElementById("commentList");
-    commentList.innerHTML = "";
+      commentList.innerHTML = "";
+      post.comments.forEach((c) => {
+        const p = document.createElement("p");
+        p.innerText = c;
+        commentList.appendChild(p);
+      });
 
-    post.comments.forEach((comment) => {
-      let p = document.createElement("p");
-      p.innerText = comment;
-      commentList.appendChild(p);
-    });
+      viewModal.style.display = "flex";
+    }
 
-    document.getElementById("viewModal").style.display = "flex";
-  }
+    function closeViewModal() {
+      viewModal.style.display = "none";
+    }
 
-  function closeViewModal() {
-    document.getElementById("viewModal").style.display = "none";
-  }
+    document
+      .querySelector("#viewModal .cancel-btn")
+      ?.addEventListener("click", closeViewModal);
 
-  document
-    .querySelector("#viewModal .cancel-btn")
-    .addEventListener("click", closeViewModal);
-
-  // REACTIONS
-  document.getElementById("heartBtn").addEventListener("click", function () {
-    if (!currentPost) return;
-    currentPost.hearts++;
-    saveData();
-    openViewModal(currentPost);
-    renderPosts();
-  });
-
-  document.getElementById("likeBtn").addEventListener("click", function () {
-    if (!currentPost) return;
-    currentPost.likes++;
-    saveData();
-    openViewModal(currentPost);
-    renderPosts();
-  });
-
-  // ADD COMMENT
-  document
-    .getElementById("addCommentBtn")
-    .addEventListener("click", function () {
+    // -----------------------
+    // REACTIONS
+    // -----------------------
+    heartBtn?.addEventListener("click", () => {
       if (!currentPost) return;
-
-      let commentText = document.getElementById("newComment").value;
-
-      if (commentText.trim() !== "") {
-        currentPost.comments.push(commentText);
-        document.getElementById("newComment").value = "";
-
-        updatePreviewCounts();
-      }
+      currentPost.hearts++;
+      saveBoards();
+      renderPosts();
+      openViewModal(currentPost);
     });
 
-  // --------------------
-  // UPDATE PREVIEW COUNTS (Post Card)
-  // --------------------
+    likeBtn?.addEventListener("click", () => {
+      if (!currentPost) return;
+      currentPost.likes++;
+      saveBoards();
+      renderPosts();
+      openViewModal(currentPost);
+    });
 
-  function updatePreviewCounts() {
-    let commentPreview = currentPost.querySelector(".comment-preview");
-    let likePreview = currentPost.querySelector(".like-preview");
+    // -----------------------
+    // COMMENTS
+    // -----------------------
+    addCommentBtn?.addEventListener("click", () => {
+      if (!currentPost) return;
+      const comment = newComment.value.trim();
+      if (!comment) return;
+      currentPost.comments.push(comment);
+      newComment.value = "";
+      saveBoards();
+      renderPosts();
+      openViewModal(currentPost);
+    });
+  }
 
-    commentPreview.innerText = `💬 ${currentPost.postData.comments.length} comments`;
-    likePreview.innerText = `👍 ${currentPost.postData.likes} likes`;
+  // -----------------------
+  // JOIN / LEAVE BUTTON
+  // -----------------------
+  if (joinLeaveBtn) {
+    function updateJoinLeaveButtonText() {
+      // Hide button if user is the creator or this is "Main Page"
+      if (
+        currentBoard.creator === loggedInUser ||
+        currentBoard.name === "Main Page"
+      ) {
+        joinLeaveBtn.style.display = "none";
+        return;
+      }
+      joinLeaveBtn.style.display = "inline-block";
+      joinLeaveBtn.textContent = currentBoard.joinedUsers.includes(loggedInUser)
+        ? "Leave Board"
+        : "Join Board";
+    }
+
+    joinLeaveBtn.onclick = () => {
+      if (currentBoard.joinedUsers.includes(loggedInUser)) {
+        currentBoard.joinedUsers = currentBoard.joinedUsers.filter(
+          (u) => u !== loggedInUser,
+        );
+      } else {
+        currentBoard.joinedUsers.push(loggedInUser);
+      }
+      saveBoards();
+      renderSidebar();
+      updateJoinLeaveButtonText();
+    };
+
+    updateJoinLeaveButtonText();
   }
 });
-
-
