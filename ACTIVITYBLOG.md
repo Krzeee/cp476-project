@@ -34,6 +34,7 @@
 - Update joining/leaving boards
 - Added page create button for dynamic storage
 - Polished UI
-- Fixed reply bugs
+- Fixed reply bugs where replies would not leave text box when added
 - Create and added database skeleton for minimal storage
 - Finished database design package
+- Fixed issue where profile page could not access boards or load board on left bar
