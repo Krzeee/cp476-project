@@ -1,21 +1,32 @@
 # Tables
 
 - Users
-    - Username/UserID (primary key)
-    - DisplayName
+    - UserID
+    - Username
     - PasswordHash
 - Boards
     - BoardID
-    - Admins
+    - BoardName
 - Posts
     - PostID
-    - Board
-    - Author
-    - Content
+    - BoardID (Foreign Key)
+    - Author (Foreign Key)
+    - Content 
     - CreationDate
-- Replies
-    - ReplyID
-    - ParentID
-    - Author
+- Profiles
+    - Username
     - Content
-    - CreationDate
+    - Icon
+- BoardFollow
+    - UserID (Foreign Key)
+    - BoardID (Foreign Key)
+    - Relationship (Primary Key)
+- UserFollow
+    - FollowerID (Foreign Key)
+    - FollowingID (Foreign Key)
+    - Relationship (Primary Key)
+- Attachments
+    - FileType
+    - PostID (Foreign Key)
+    - FileURL
+    - AttachmentID
