@@ -1,100 +1,103 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Channel Layout</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-<body>
-
+  <body>
     <div class="container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <h2 class="logo">LOGO</h2>
 
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <h2 class="logo">LOGO</h2>
+        <h3>Channels</h3>
+        <ul class="channel-list">
+          <li><a href="index.html">MAIN PAGE</a></li>
+          <li><a href="channel1.html">● channel-one</a></li>
+          <li><a href="channel2.html">● channel-two</a></li>
+          <li><a href="channel3.html">● channel-three</a></li>
+        </ul>
 
-            <h3>Channels</h3>
-            <ul class="channel-list">
-                <li><a href="index.html">MAIN PAGE</a></li>
-                <li><a href="channel1.html">● channel-one</a></li>
-                <li><a href="channel2.html">● channel-two</a></li>
-                <li><a href="channel3.html">● channel-three</a></li>
-            </ul>
+        <h3>Join a channel:</h3>
+        <ul class="join-list">
+          <li><a href="channel4.html">→ channel-four</a></li>
+          <li><a href="channel5.html">→ channel-five</a></li>
+        </ul>
+      </aside>
 
-            <h3>Join a channel:</h3>
-            <ul class="join-list">
-                <li><a href="channel4.html">→ channel-four</a></li>
-                <li><a href="channel5.html">→ channel-five</a></li>
-            </ul>
-        </aside>
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+          <button class="post-btn" onclick="openModal()">POST</button>
+          <span class="logout" id="logoutBtn">logout</span>
+          <div class="profile">
+            <a href="profile.html" id="topProfileLink">
+              <img
+                src="default-avatar.png"
+                alt="Profile Picture"
+                id="topProfilePic"
+                class="top-profile-pic"
+              />
+            </a>
+          </div>
+        </div>
 
-        <!-- Main Content -->
-        <main class="main-content">
-
-            <!-- Top Bar -->
-            <div class="top-bar">
-                <button class="post-btn" onclick="openModal()">POST</button>
-                <span class="logout" id="logoutBtn">logout</span>
-                <div class="profile"></div>
-            </div>
-
-            <h2 id="currentChannelTitle">Channel Four</h2>
-            <div id="postsContainer"></div>
-
-        </main>
-
+        <h2 id="currentChannelTitle">Channel Four</h2>
+        <div id="postsContainer"></div>
+      </main>
     </div>
 
     <!-- Modal Overlay -->
     <div id="modalOverlay" class="modal-overlay">
+      <div class="modal-box">
+        <h3>Create Post</h3>
 
-        <div class="modal-box">
-            <h3>Create Post</h3>
+        <form id="postForm">
+          <input type="text" id="postTitle" placeholder="Post Title" required />
 
-            <form id="postForm">
-                <input type="text" id="postTitle" placeholder="Post Title" required>
+          <textarea
+            id="postBody"
+            placeholder="Body Text"
+            rows="5"
+            required
+          ></textarea>
 
-                <textarea id="postBody" placeholder="Body Text" rows="5" required></textarea>
-
-                <div class="modal-buttons">
-                    <button type="submit" class="submit-btn">Post</button>
-                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
-                </div>
-            </form>
-        </div>
-
+          <div class="modal-buttons">
+            <button type="submit" class="submit-btn">Post</button>
+            <button type="button" class="cancel-btn" onclick="closeModal()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <!-- Post View Modal -->
     <div id="viewModal" class="modal-overlay">
+      <div class="modal-box">
+        <h3 id="viewTitle"></h3>
+        <p id="viewBody"></p>
 
-        <div class="modal-box">
-
-            <h3 id="viewTitle"></h3>
-            <p id="viewBody"></p>
-
-            <div class="reaction-bar">
-                <button id="heartBtn">❤️ <span id="heartCount">0</span></button>
-                <button id="likeBtn">👍 <span id="likeCount">0</span></button>
-            </div>
-
-            <h4>Comments</h4>
-            <div id="commentList"></div>
-
-            <textarea id="newComment" placeholder="Add a comment..."></textarea>
-            <button id="addCommentBtn">Add Comment</button>
-
-            <br><br>
-            <button onclick="closeViewModal()" class="cancel-btn">Close</button>
-
+        <div class="reaction-bar">
+          <button id="heartBtn">❤️ <span id="heartCount">0</span></button>
+          <button id="likeBtn">👍 <span id="likeCount">0</span></button>
         </div>
 
+        <h4>Comments</h4>
+        <div id="commentList"></div>
+
+        <textarea id="newComment" placeholder="Add a comment..."></textarea>
+        <button id="addCommentBtn">Add Comment</button>
+
+        <br /><br />
+        <button onclick="closeViewModal()" class="cancel-btn">Close</button>
+      </div>
     </div>
 
+    <script src="profileBar.js"></script>
     <script src="script.js"></script>
-
-</body>
-
+  </body>
 </html>

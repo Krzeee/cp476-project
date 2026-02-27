@@ -13,27 +13,81 @@
 
         <h3>Channels</h3>
         <ul class="channel-list">
-          <li>● channel-one</li>
-          <li>● channel-two</li>
-          <li>● channel-three</li>
+          <li><a href="index.html">MAIN PAGE</a></li>
+          <li><a href="channel1.html">● channel-one</a></li>
+          <li><a href="channel2.html">● channel-two</a></li>
+          <li><a href="channel3.html">● channel-three</a></li>
         </ul>
 
         <h3>Join a channel:</h3>
         <ul class="join-list">
-          <li>→ channel-four</li>
-          <li>→ channel-five</li>
+          <li><a href="channel4.html">→ channel-four</a></li>
+          <li><a href="channel5.html">→ channel-five</a></li>
         </ul>
       </aside>
+
+      <!-- Edit Profile Modal -->
+      <div id="editProfileOverlay" class="modal-overlay">
+        <div class="modal-box">
+          <h3>Edit Profile</h3>
+
+          <label>Profile Picture</label>
+          <input type="file" id="profilePicInput" accept="image/*" />
+
+          <label>Bio</label>
+          <textarea
+            id="editBioInput"
+            placeholder="Write your bio..."
+          ></textarea>
+
+          <div class="modal-buttons">
+            <button class="submit-btn" id="saveProfileBtn">Save</button>
+            <button class="cancel-btn" id="cancelProfileBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
 
       <!-- Main Content -->
       <main class="main-content">
         <!-- Top Bar -->
         <div class="top-bar">
-          <button class="post-btn" onclick="openModal()">POST</button>
           <span class="logout">logout</span>
-          <div class="profile"></div>
+          <div class="profile">
+            <a href="profile.html" id="topProfileLink">
+              <img
+                src="default-avatar.png"
+                alt="Profile Picture"
+                id="topProfilePic"
+                class="top-profile-pic"
+              />
+            </a>
+          </div>
         </div>
+        <!-- Profile Section -->
+        <section class="profile-section">
+          <div class="profile-header">
+            <img
+              src="default-avatar.png"
+              alt="Profile Picture"
+              class="profile-pic"
+            />
+
+            <div class="profile-info">
+              <h2 class="username" id="usernameDisplay">@username</h2>
+
+              <span class="edit-icon" title="Edit profile"> ✏️ </span>
+
+              <!-- Bio display -->
+              <p id="bioText" class="bio-text">
+                This is a short bio about the user.
+              </p>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
+
+    <script src="profileBar.js"></script>
+    <script src="profile.js"></script>
   </body>
 </html>
