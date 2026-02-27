@@ -36,14 +36,6 @@ CREATE TABLE profiles {
   FOREIGN KEY (username) REFERENCES users(username)
 }
 
-CREATE TABLE user_follows {
-  followerID INT NOT NULL,
-  followingID INT NOT NULL,
-  PRIMARY KEY (followerID, followingID),
-  FOREIGN KEY (followerID) REFERENCES users(userID),
-  FOREIGN KEY (followingID) REFERENCE users(userID)
-}
-
 CREATE TABLE board_follows {
   userID INT NOT NULL,
   boardID INT NOT NULL,
@@ -52,10 +44,10 @@ CREATE TABLE board_follows {
   FOREIGN KEY (boardID) REFERENCES boards(boardID)
 }
 
-CREATE TABLE attachments {
-  attachmentID INT AUTO_INCREMENT PRIMARY KEY,
-  fileType VARCHAR(50) NOT NULL,
-  postID INT NOT NULL,
-  fileURL VARCHAR(255) NOT NULL,
-  FOREIGN KEY (postID) REFERENCES posts(postID)
-}
+-- CREATE TABLE attachments {
+--  attachmentID INT AUTO_INCREMENT PRIMARY KEY,
+--  fileType VARCHAR(50) NOT NULL,
+--  postID INT NOT NULL,
+--  fileURL VARCHAR(255) NOT NULL,
+--  FOREIGN KEY (postID) REFERENCES posts(postID)
+--}
