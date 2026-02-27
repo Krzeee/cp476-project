@@ -166,3 +166,4 @@ function updatePreviewCounts() {
     commentPreview.innerText = `💬 ${currentPost.postData.comments.length} comments`;
     likePreview.innerText = `👍 ${currentPost.postData.likes} likes`;
 }
+})
