@@ -25,11 +25,11 @@ CREATE TABLE posts (
 CREATE TABLE replies (
   replyID INT AUTO_INCREMENT PRIMARY KEY,
   postID INT NOT NULL,
-  author INT NOT NULL,
+  authorID INT NOT NULL,
   content TEXT NOT NULL,
   creationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (postID) REFERENCES posts(postID),
-  FOREIGN KEY (author) REFERENCES users(userID)
+  FOREIGN KEY (authorID) REFERENCES users(userID)
 );
 
 CREATE TABLE profiles (

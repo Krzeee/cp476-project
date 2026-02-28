@@ -43,12 +43,12 @@ body {
   color: #00e676;
 }
 
-.channel-list,
+.board-list,
 .join-list {
   list-style: none;
 }
 
-.channel-list li,
+.board-list li,
 .join-list li {
   margin: 10px 0;
 }
@@ -345,4 +345,38 @@ body {
   object-fit: cover;
   cursor: pointer;
   border: 2px solid #fff;
+}
+
+.create-board-btn {
+  width: 100%;
+  background-color: #00e676;
+  border: none;
+  color: #0d47a1;
+  font-weight: bold;
+  padding: 8px 0;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  cursor: pointer;
+}
+
+.create-board-btn:hover {
+  background-color: #00c853;
+}
+
+.join-leave-btn {
+  width: 130px;
+  height: 30px;
+  background-color: #00e676;
+  color: #0d47a1;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-left: 10px;
+  padding: 4px 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.board-title {
+  margin-bottom: 20px;
 }

@@ -13,7 +13,7 @@
   - User Story Ideas (Nanditha)
   - Project Proposal (Derek)
 
-## 2026/01/27 (1.5 Hours)
+## 2026/02/26 (1.5 Hours)
 
 - Created Database CREATE Tables
 - Uploaded index.html for posts
@@ -27,3 +27,14 @@
   - Finish profiles (Derek and Trenton)
   - KanBan Board updates (Everyone)
   - Finish database design package (Derek and Trenton)
+
+## 2026/02/27 (1 Hour)
+
+- Update profiles for images and text
+- Update joining/leaving boards
+- Added page create button for dynamic storage
+- Polished UI
+- Fixed reply bugs where replies would not leave text box when added
+- Create and added database skeleton for minimal storage
+- Finished database design package
+- Fixed issue where profile page could not access boards or load board on left bar

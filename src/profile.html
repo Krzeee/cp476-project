@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Channel Layout</title>
+    <title>Board Layout</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -11,19 +11,11 @@
       <aside class="sidebar">
         <h2 class="logo">LOGO</h2>
 
-        <h3>Channels</h3>
-        <ul class="channel-list">
-          <li><a href="index.html">MAIN PAGE</a></li>
-          <li><a href="channel1.html">● channel-one</a></li>
-          <li><a href="channel2.html">● channel-two</a></li>
-          <li><a href="channel3.html">● channel-three</a></li>
-        </ul>
+        <h3>Boards</h3>
+        <ul class="board-list" id="myBoards"></ul>
 
-        <h3>Join a channel:</h3>
-        <ul class="join-list">
-          <li><a href="channel4.html">→ channel-four</a></li>
-          <li><a href="channel5.html">→ channel-five</a></li>
-        </ul>
+        <h3>Join a Board:</h3>
+        <ul class="join-list" id="availableBoards"></ul>
       </aside>
 
       <!-- Edit Profile Modal -->
@@ -51,7 +43,7 @@
       <main class="main-content">
         <!-- Top Bar -->
         <div class="top-bar">
-          <span class="logout">logout</span>
+          <span class="logout" id="logoutBtn">Logout</span>
           <div class="profile">
             <a href="profile.html" id="topProfileLink">
               <img
@@ -63,6 +55,7 @@
             </a>
           </div>
         </div>
+        <div id="postsContainer" style="display: none"></div>
         <!-- Profile Section -->
         <section class="profile-section">
           <div class="profile-header">
@@ -88,6 +81,7 @@
     </div>
 
     <script src="profileBar.js"></script>
+    <script src="script.js"></script>
     <script src="profile.js"></script>
   </body>
 </html>

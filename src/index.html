@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Channel Layout</title>
+    <title>Board Layout</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
 
@@ -11,20 +11,14 @@
       <!-- Sidebar -->
       <aside class="sidebar">
         <h2 class="logo">LOGO</h2>
+        <button id="createBoardBtn" class="create-board-btn">
+          + Create Board
+        </button>
+        <h3>Boards</h3>
+        <ul class="board-list" id="myBoards"></ul>
 
-        <h3>Channels</h3>
-        <ul class="channel-list">
-          <li><a href="index.html">MAIN PAGE</a></li>
-          <li><a href="channel1.html">● channel-one</a></li>
-          <li><a href="channel2.html">● channel-two</a></li>
-          <li><a href="channel3.html">● channel-three</a></li>
-        </ul>
-
-        <h3>Join a channel:</h3>
-        <ul class="join-list">
-          <li><a href="channel4.html">→ channel-four</a></li>
-          <li><a href="channel5.html">→ channel-five</a></li>
-        </ul>
+        <h3>Join a Board:</h3>
+        <ul class="join-list" id="availableBoards"></ul>
       </aside>
 
       <!-- Main Content -->
@@ -32,7 +26,7 @@
         <!-- Top Bar -->
         <div class="top-bar">
           <button class="post-btn" onclick="openModal()">POST</button>
-          <span class="logout" id="logoutBtn">logout</span>
+          <span class="logout" id="logoutBtn">Logout</span>
           <div class="profile">
             <a href="profile.html" id="topProfileLink">
               <img
@@ -45,7 +39,10 @@
           </div>
         </div>
 
-        <h2 id="currentChannelTitle">MAIN PAGE</h2>
+        <h2 class="board-title" id="currentBoardTitleContainer">
+          <span id="currentBoardTitle">MAIN PAGE</span>
+          <button id="joinLeaveBtn" class="join-leave-btn">JOIN</button>
+        </h2>
         <div id="postsContainer"></div>
       </main>
     </div>
@@ -67,9 +64,7 @@
 
           <div class="modal-buttons">
             <button type="submit" class="submit-btn">Post</button>
-            <button type="button" class="cancel-btn" onclick="closeModal()">
-              Cancel
-            </button>
+            <button type="button" class="cancel-btn">Cancel</button>
           </div>
         </form>
       </div>
