@@ -17,7 +17,9 @@ Why this works well:
 ## Frontend
 Run website with Python via Terminal/Command prompt and navigate to directory
 `cd src`
+
 Run `python -m http.server 8000`
+
 Open `http://localhost:8000`
 
 ## Backend
