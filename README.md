@@ -30,5 +30,7 @@ Run the API endpoint server via `node backend/src/index.js`
 
 ## Contributions
 Derek: Profile page, local storage setup, board object creation
+
 Trenton: Database and back-end setup
+
 Nanditha: Front-end setup, account register and login, stylesheet
