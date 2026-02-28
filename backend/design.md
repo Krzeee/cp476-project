@@ -13,20 +13,17 @@
     - Author (Foreign Key)
     - Content 
     - CreationDate
+- Replies
+    - ReplyID
+    - PostID (Foreign Key)
+    - Author (Foreign Key)
+    - Content 
+    - CreationDate
 - Profiles
-    - Username
+    - UserID (Foreign Key)
     - Content
     - Icon
 - BoardFollow
     - UserID (Foreign Key)
     - BoardID (Foreign Key)
     - Relationship (Primary Key)
-- UserFollow
-    - FollowerID (Foreign Key)
-    - FollowingID (Foreign Key)
-    - Relationship (Primary Key)
-- Attachments
-    - FileType
-    - PostID (Foreign Key)
-    - FileURL
-    - AttachmentID

@@ -1,53 +1,48 @@
-CREATE TABLE users {
+CREATE DATABASE IF NOT EXISTS forum;
+USE forum;
+
+CREATE TABLE users (
   userID INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(50) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL
-}
+  passwordHash VARCHAR(255) NOT NULL
+);
 
-CREATE TABLE board {
+CREATE TABLE boards (
   boardID INT AUTO_INCREMENT PRIMARY KEY,
   boardName VARCHAR(50) NOT NULL UNIQUE
-}
+);
 
-CREATE TABLE posts {
+CREATE TABLE posts (
   postID INT AUTO_INCREMENT PRIMARY KEY,
   boardID INT NOT NULL,
-  authorID INT NOT NULL,
-  contentText TEXT NOT NULL,
-  postDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  author INT NOT NULL,
+  content TEXT NOT NULL,
+  creationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (boardID) REFERENCES boards(boardID),
-  FOREIGN KEY (authorID) REFERENCES users(userID),
-}
+  FOREIGN KEY (author) REFERENCES users(userID)
+);
 
-CREATE TABLE replies {
+CREATE TABLE replies (
   replyID INT AUTO_INCREMENT PRIMARY KEY,
   postID INT NOT NULL,
-  authorID INT NOT NULL,
-  contentText TEXT NOT NULL,
-  replyDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  author INT NOT NULL,
+  content TEXT NOT NULL,
+  creationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (postID) REFERENCES posts(postID),
-  FOREIGN KEY (authorID) REFERENCES users(userID)
-}
+  FOREIGN KEY (author) REFERENCES users(userID)
+);
 
-CREATE TABLE profiles {
-  username VARCHAR(50) PRIMARY KEY,
-  profileBody TEXT,
-  profileIcon VARCHAR(255), --URL/filepath to img
-  FOREIGN KEY (username) REFERENCES users(username)
-}
+CREATE TABLE profiles (
+  userID INT PRIMARY KEY,
+  content TEXT,
+  icon VARCHAR(255), -- URL/filepath to img
+  FOREIGN KEY (userID) REFERENCES users(userID)
+);
 
-CREATE TABLE board_follows {
+CREATE TABLE boardFollow (
   userID INT NOT NULL,
   boardID INT NOT NULL,
   PRIMARY KEY (userID, boardID),
   FOREIGN KEY (userID) REFERENCES users(userID),
   FOREIGN KEY (boardID) REFERENCES boards(boardID)
-}
-
--- CREATE TABLE attachments {
---  attachmentID INT AUTO_INCREMENT PRIMARY KEY,
---  fileType VARCHAR(50) NOT NULL,
---  postID INT NOT NULL,
---  fileURL VARCHAR(255) NOT NULL,
---  FOREIGN KEY (postID) REFERENCES posts(postID)
---}
+);
