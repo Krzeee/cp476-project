@@ -13,3 +13,11 @@ Why this works well:
 - Classic web application pattern
 - Strong CRUD and relational design
 - Easy to demonstrate moderation or permission
+
+## Backend
+Run database via the compose.yaml file in the backend/mysql directory
+
+`cd backend/mysql`
+`docker compose up -d`
+
+Run the API endpoint server via `node backend/src/index.js`
