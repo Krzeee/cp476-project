@@ -3,3 +3,8 @@ services:
     image: mysql
     environment:
       MYSQL_ROOT_PASSWORD: insecurepassword
+      MYSQL_DATABASE: forum
+    volumes:
+      - ../makedb.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
