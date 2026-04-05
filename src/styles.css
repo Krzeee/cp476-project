@@ -347,7 +347,7 @@ body {
 
 .bio-text {
   margin-top: 10px;
-  color: #444;
+  color: var(--text-secondary);
 }
 
 /* Username + Edit Icon */

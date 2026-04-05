@@ -124,29 +124,30 @@ document.addEventListener("DOMContentLoaded", () => {
       createBoardOverlay.style.display = "none";
       createBoardForm.reset();
     }
+    if (createBoardForm) {
+      createBoardForm.addEventListener("submit", (e) => {
+        e.preventDefault();
 
-    createBoardForm.addEventListener("submit", (e) => {
-      e.preventDefault();
+        const name = boardNameInput.value.trim();
+        if (!name) return;
 
-      const name = boardNameInput.value.trim();
-      if (!name) return;
+        if (boards.some((b) => b.name === name)) {
+          alert("Board already exists!");
+          return;
+        }
 
-      if (boards.some((b) => b.name === name)) {
-        alert("Board already exists!");
-        return;
-      }
+        boards.push({
+          name,
+          creator: loggedInUser,
+          joinedUsers: [loggedInUser],
+          posts: [],
+        });
 
-      boards.push({
-        name,
-        creator: loggedInUser,
-        joinedUsers: [loggedInUser],
-        posts: [],
+        saveBoards();
+        renderSidebar();
+        closeCreateBoardModal();
       });
-
-      saveBoards();
-      renderSidebar();
-      closeCreateBoardModal();
-    });
+    }
 
     function joinBoard(index) {
       const board = boards[index];
@@ -173,10 +174,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // -----------------------
   // POSTS (only if postsContainer exists)
   // -----------------------
-  let currentPost = null;
-
   if (postsContainer) {
-    document.getElementById("currentBoardTitle").textContent = currentBoardName;
+    const titleEl = document.getElementById("currentBoardTitle");
+
+    if (titleEl) {
+      titleEl.textContent = currentBoardName;
+    }
 
     function renderPosts() {
       postsContainer.innerHTML = "";
@@ -184,15 +187,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const postDiv = document.createElement("div");
         postDiv.classList.add("post");
         postDiv.innerHTML = `
-          <div class="post-text">
-            <h4>${post.title}</h4>
-            <p>${post.body}</p>
-          </div>
-          <div class="post-meta">
-            <span>💬 ${post.comments.length} comments</span>
-            <span>👍 ${post.likes} likes</span>
-          </div>
-        `;
+        <div class="post-text">
+          <h4>${post.title}</h4>
+          <p>${post.body}</p>
+        </div>
+        <div class="post-meta">
+          <span>💬 ${post.comments.length} comments</span>
+          <span>👍 ${post.likes} likes</span>
+        </div>
+      `;
         postDiv.addEventListener("click", () => openViewModal(post));
         postsContainer.appendChild(postDiv);
       });
@@ -350,20 +353,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // -----------------------
   const toggleBtn = document.getElementById("themeToggle");
 
-  if (localStorage.getItem("theme") === "dark") {
-    document.body.classList.add("dark");
-    toggleBtn.textContent = "🌙";
-  }
-
-  toggleBtn.addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-
-    if (document.body.classList.contains("dark")) {
-      localStorage.setItem("theme", "dark");
+  if (toggleBtn) {
+    if (localStorage.getItem("theme") === "dark") {
+      document.body.classList.add("dark");
       toggleBtn.textContent = "🌙";
-    } else {
-      localStorage.setItem("theme", "light");
-      toggleBtn.textContent = "☀️";
     }
-  });
+
+    toggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+
+      if (document.body.classList.contains("dark")) {
+        localStorage.setItem("theme", "dark");
+        toggleBtn.textContent = "🌙";
+      } else {
+        localStorage.setItem("theme", "light");
+        toggleBtn.textContent = "☀️";
+      }
+    });
+  }
 });
