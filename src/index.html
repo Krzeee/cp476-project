@@ -48,7 +48,7 @@
       </main>
     </div>
 
-    <!-- Modal Overlay -->
+    <!-- Post Modal Overlay -->
     <div id="modalOverlay" class="modal-overlay">
       <div class="modal-box">
         <h3>Create Post</h3>
@@ -69,6 +69,27 @@
           </div>
         </form>
       </div>
+    </div>
+
+    <div id="createBoardOverlay" class="modal-overlay">
+      <div class="modal-box">
+        <h3>Create Board</h3>
+
+        <form id="createBoardForm">
+          <input
+            type="text"
+            id="boardNameInput"
+            placeholder="Board Name"
+            required
+          />
+
+          <div class="modal-buttons">
+            <button type="submit" class="submit-btn">Create</button>
+            <button type="button" class="cancel-btn">Cancel</button>
+          </div>
+        </form>
+      </div>
+
     </div>
 
     <!-- Post View Modal -->

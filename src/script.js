@@ -22,6 +22,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const createBoardBtn = document.getElementById("createBoardBtn");
   const postsContainer = document.getElementById("postsContainer");
   const joinLeaveBtn = document.getElementById("joinLeaveBtn");
+  const createBoardOverlay = document.getElementById("createBoardOverlay");
+  const createBoardForm = document.getElementById("createBoardForm");
+  const boardNameInput = document.getElementById("boardNameInput");
 
   // -----------------------
   // LOAD BOARDS
@@ -114,8 +117,18 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    function createBoard() {
-      const name = prompt("Enter new board name:");
+    function openCreateBoardModal() {
+      createBoardOverlay.style.display = "flex";
+    }
+    function closeCreateBoardModal() {
+      createBoardOverlay.style.display = "none";
+      createBoardForm.reset();
+    }
+
+    createBoardForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const name = boardNameInput.value.trim();
       if (!name) return;
 
       if (boards.some((b) => b.name === name)) {
@@ -132,7 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       saveBoards();
       renderSidebar();
-    }
+      closeCreateBoardModal();
+    });
 
     function joinBoard(index) {
       const board = boards[index];
@@ -152,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "index.html";
     }
 
-    createBoardBtn?.addEventListener("click", createBoard);
+    createBoardBtn?.addEventListener("click", openCreateBoardModal);
     renderSidebar();
   }
 
