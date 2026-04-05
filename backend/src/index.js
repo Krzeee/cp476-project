@@ -6,6 +6,8 @@ const {
   makePost,
   replyToPost,
   followBoard,
+  likePost,
+  heartPost,
   updateUserProfile,
   getBoards,
   getPostsInBoard,
@@ -43,9 +45,9 @@ app.post('/register', async (req, res) => {
 });
 
 app.post('/boards', async (req, res) => {
-  const { boardName } = req.body;
+  const { boardName, creatorID } = req.body;
   try {
-    const id = await addBoard(boardName, pool);
+    const id = await addBoard(boardName, creatorID, pool);
     res.json({ boardID: id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -53,10 +55,30 @@ app.post('/boards', async (req, res) => {
 });
 
 app.post('/posts', async (req, res) => {
-  const { boardID, authorID, content } = req.body;
+  const { boardID, authorID, title, content } = req.body;
   try {
-    const id = await makePost(boardID, authorID, content, pool);
+    const id = await makePost(boardID, authorID, title, content, pool);
     res.json({ postID: id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/posts/:postID/like', async (req, res) => {
+  const { postID } = req.params;
+  try {
+    await likePost(Number(postID), pool);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/posts/:postID/heart', async (req, res) => {
+  const { postID } = req.params;
+  try {
+    await heartPost(Number(postID), pool);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

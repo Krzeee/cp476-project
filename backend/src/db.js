@@ -6,18 +6,18 @@ async function registerUser(username, passwordHash, db) {
     return result.insertId;
 }
 
-async function addBoard(boardName, db) {
+async function addBoard(boardName, creatorID, db) {
     const [result] = await db.query(
-        'INSERT INTO boards (boardName) VALUES (?)',
-        [boardName]
+        'INSERT INTO boards (boardName, creatorID) VALUES (?, ?)',
+        [boardName, creatorID]
     );
     return result.insertId;
 }
 
-async function makePost(boardID, authorID, content, db) {
+async function makePost(boardID, authorID, title, content, db) {
     const [result] = await db.query(
-        'INSERT INTO posts (boardID, author, content) VALUES (?, ?, ?)',
-        [boardID, authorID, content]
+        'INSERT INTO posts (boardID, author, title, content) VALUES (?, ?, ?, ?)',
+        [boardID, authorID, title, content]
     );
     return result.insertId;
 }
@@ -34,6 +34,20 @@ async function followBoard(userID, boardID, db) {
     await db.query(
         'INSERT IGNORE INTO boardFollow (userID, boardID) VALUES (?, ?)',
         [userID, boardID]
+    );
+}
+
+async function likePost(postID, db) {
+    await db.query(
+        'UPDATE posts SET likes = likes + 1 WHERE postID = ?',
+        [postID]
+    );
+}
+
+async function heartPost(postID, db) {
+    await db.query(
+        'UPDATE posts SET hearts = hearts + 1 WHERE postID = ?',
+        [postID]
     );
 }
 
@@ -60,7 +74,8 @@ async function getBoards(db) {
 async function getPostsInBoard(boardID, db) {
     const [rows] = await db.query(
         `SELECT p.postID, p.boardID, p.author AS authorID, u.username AS authorName,
-                p.content, p.creationDate
+                p.title, p.content AS body, p.likes, p.hearts, p.creationDate,
+                (SELECT COUNT(*) FROM replies WHERE postID = p.postID) AS commentCount
          FROM posts p
          JOIN users u ON u.userID = p.author
          WHERE p.boardID = ?
@@ -112,6 +127,8 @@ module.exports = {
     makePost,
     replyToPost,
     followBoard,
+    likePost,
+    heartPost,
     updateUserProfile,
     getBoards,
     getPostsInBoard,

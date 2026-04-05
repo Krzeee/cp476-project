@@ -7,11 +7,15 @@
 - Boards
     - BoardID
     - BoardName
+    - CreatorID (Foreign Key)
 - Posts
     - PostID
     - BoardID (Foreign Key)
     - Author (Foreign Key)
+    - Title
     - Content 
+    - Likes
+    - Hearts
     - CreationDate
 - Replies
     - ReplyID
@@ -26,4 +30,3 @@
 - BoardFollow
     - UserID (Foreign Key)
     - BoardID (Foreign Key)
-    - Relationship (Primary Key)
