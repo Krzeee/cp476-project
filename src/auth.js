@@ -1,51 +1,72 @@
+const API = 'http://localhost:3000';
+
 document.addEventListener("DOMContentLoaded", function () {
 
-    // ---------- REGISTER ----------
-    let registerForm = document.getElementById("registerForm");
+  // ---------- REGISTER ----------
+  const registerForm = document.getElementById("registerForm");
 
-    if (registerForm) {
-        registerForm.addEventListener("submit", function (e) {
-            e.preventDefault();
+  if (registerForm) {
+    registerForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-            let username = document.getElementById("registerUsername").value;
-            let password = document.getElementById("registerPassword").value;
+      const username = document.getElementById("registerUsername").value.trim();
+      const password = document.getElementById("registerPassword").value;
 
-            let users = JSON.parse(localStorage.getItem("users")) || {};
-
-            if (users[username]) {
-                alert("Username already exists!");
-                return;
-            }
-
-            users[username] = password;
-            localStorage.setItem("users", JSON.stringify(users));
-
-            alert("Account created! Please log in.");
-            window.location.href = "login.html";
+      try {
+        const res = await fetch(`${API}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, passwordHash: password }),
         });
-    }
 
-    // ---------- LOGIN ----------
-    let loginForm = document.getElementById("loginForm");
+        const data = await res.json();
 
-    if (loginForm) {
-        loginForm.addEventListener("submit", function (e) {
-            e.preventDefault();
+        if (!res.ok) {
+          alert(data.error || 'Registration failed.');
+          return;
+        }
 
-            let username = document.getElementById("loginUsername").value;
-            let password = document.getElementById("loginPassword").value;
+        alert('Account created! Please log in.');
+        window.location.href = 'login.html';
+      } catch (err) {
+        alert('Could not connect to server.');
+        console.error(err);
+      }
+    });
+  }
 
-            let users = JSON.parse(localStorage.getItem("users")) || {};
+  // ---------- LOGIN ----------
+  const loginForm = document.getElementById("loginForm");
 
-            if (users[username] && users[username] === password) {
+  if (loginForm) {
+    loginForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-                localStorage.setItem("loggedInUser", username);
-                window.location.href = "index.html";
+      const username = document.getElementById("loginUsername").value.trim();
+      const password = document.getElementById("loginPassword").value;
 
-            } else {
-                alert("Invalid login!");
-            }
+      try {
+        const res = await fetch(`${API}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, passwordHash: password }),
         });
-    }
 
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.error || 'Invalid login!');
+          return;
+        }
+
+        // Store session info in localStorage (just IDs, no sensitive data)
+        localStorage.setItem('loggedInUser', data.username);
+        localStorage.setItem('loggedInUserID', data.userID);
+        window.location.href = 'index.html';
+      } catch (err) {
+        alert('Could not connect to server.');
+        console.error(err);
+      }
+    });
+  }
 });

@@ -1,16 +1,22 @@
 // script.js
-document.addEventListener("DOMContentLoaded", () => {
+const API = 'http://localhost:3000';
+
+document.addEventListener("DOMContentLoaded", async () => {
+
   // -----------------------
-  // AUTH & LOGOUT
+  // AUTH & SESSION
   // -----------------------
   const loggedInUser = localStorage.getItem("loggedInUser");
-  if (!loggedInUser) {
+  const loggedInUserID = Number(localStorage.getItem("loggedInUserID"));
+
+  if (!loggedInUser || !loggedInUserID) {
     window.location.href = "login.html";
     return;
   }
 
   document.getElementById("logoutBtn")?.addEventListener("click", () => {
     localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("loggedInUserID");
     window.location.href = "login.html";
   });
 
@@ -27,348 +33,331 @@ document.addEventListener("DOMContentLoaded", () => {
   const boardNameInput = document.getElementById("boardNameInput");
 
   // -----------------------
-  // LOAD BOARDS
+  // LOAD ALL BOARDS + USER'S FOLLOWED BOARDS
   // -----------------------
-  let boards = [];
-  const stored = localStorage.getItem("boards");
+  let allBoards = [];
+  let myBoardIDs = new Set();
+  let currentBoard = null; // { boardID, boardName }
+  let currentPost = null;  // post object from API
 
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      boards = Array.isArray(parsed) ? parsed : [];
-    } catch {
-      boards = [];
-    }
-  }
-
-  // Ensure "Main Page" exists and everyone follows it
-  if (!boards.some((b) => b.name === "Main Page")) {
-    boards.unshift({
-      name: "Main Page",
-      creator: "system",
-      joinedUsers: [loggedInUser],
-      posts: [],
-    });
-  } else {
-    // Make sure current user is following Main Page
-    const mainPage = boards.find((b) => b.name === "Main Page");
-    if (!mainPage.joinedUsers) mainPage.joinedUsers = [];
-    if (!mainPage.joinedUsers.includes(loggedInUser)) {
-      mainPage.joinedUsers.push(loggedInUser);
-    }
-  }
-
-  function saveBoards() {
-    localStorage.setItem("boards", JSON.stringify(boards));
+  async function loadBoards() {
+    const [allRes, myRes] = await Promise.all([
+      fetch(`${API}/boards`),
+      fetch(`${API}/users/${loggedInUserID}/boards`),
+    ]);
+    allBoards = await allRes.json();
+    const myBoards = await myRes.json();
+    myBoardIDs = new Set(myBoards.map(b => b.boardID));
   }
 
   // -----------------------
-  // CURRENT BOARD (for posts page)
+  // CURRENT BOARD
   // -----------------------
-  const currentBoardName = localStorage.getItem("currentBoard") || "Main Page";
-  let currentBoard = boards.find((b) => b.name === currentBoardName);
+  // Stored as boardID in localStorage so it survives page navigations
+  async function resolveCurrentBoard() {
+    let storedBoardID = Number(localStorage.getItem("currentBoardID"));
 
-  if (!currentBoard) {
-    currentBoard = {
-      name: currentBoardName,
-      creator: loggedInUser,
-      joinedUsers: [loggedInUser],
-      posts: [],
-    };
-    boards.push(currentBoard);
-    saveBoards();
+    if (!storedBoardID && allBoards.length > 0) {
+      // Default to first board (Main Page equivalent)
+      storedBoardID = allBoards[0].boardID;
+      localStorage.setItem("currentBoardID", storedBoardID);
+    }
+
+    currentBoard = allBoards.find(b => b.boardID === storedBoardID) || allBoards[0] || null;
   }
 
-  if (!currentBoard.joinedUsers)
-    currentBoard.joinedUsers = [currentBoard.creator];
-
   // -----------------------
-  // SIDEBAR (Boards / Join a Board)
+  // SIDEBAR
   // -----------------------
-  if (myBoardsList && availableBoardsList) {
-    function renderSidebar() {
-      myBoardsList.innerHTML = "";
-      availableBoardsList.innerHTML = "";
+  function renderSidebar() {
+    if (!myBoardsList || !availableBoardsList) return;
 
-      boards.forEach((board, index) => {
-        const li = document.createElement("li");
-        const link = document.createElement("a");
-        link.href = "#";
-        link.textContent = board.name;
-        link.addEventListener("click", () => openBoard(board.name));
+    myBoardsList.innerHTML = "";
+    availableBoardsList.innerHTML = "";
 
-        // Boards the user has joined
-        if (
-          board.joinedUsers.includes(loggedInUser) ||
-          board.creator === loggedInUser
-        ) {
-          li.appendChild(link);
-          myBoardsList.appendChild(li);
-        } else {
-          // Boards user can join
-          const joinLi = document.createElement("li");
-          const joinLink = document.createElement("a");
-          joinLink.href = "#";
-          joinLink.textContent = `→ ${board.name}`;
-          joinLink.addEventListener("click", () => openBoard(board.name));
-          joinLi.appendChild(joinLink);
-          availableBoardsList.appendChild(joinLi);
-        }
-      });
-    }
+    allBoards.forEach(board => {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = "#";
+      link.textContent = board.boardName;
+      link.addEventListener("click", () => openBoard(board.boardID));
+      li.appendChild(link);
 
-    function openCreateBoardModal() {
-      createBoardOverlay.style.display = "flex";
-    }
-    function closeCreateBoardModal() {
-      createBoardOverlay.style.display = "none";
-      createBoardForm.reset();
-    }
-    if (createBoardForm) {
-      createBoardForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-
-        const name = boardNameInput.value.trim();
-        if (!name) return;
-
-        if (boards.some((b) => b.name === name)) {
-          alert("Board already exists!");
-          return;
-        }
-
-        boards.push({
-          name,
-          creator: loggedInUser,
-          joinedUsers: [loggedInUser],
-          posts: [],
-        });
-
-        saveBoards();
-        renderSidebar();
-        closeCreateBoardModal();
-      });
-    }
-
-    function joinBoard(index) {
-      const board = boards[index];
-      if (!board.joinedUsers.includes(loggedInUser)) {
-        board.joinedUsers.push(loggedInUser);
-        saveBoards();
-        renderSidebar();
-        // Update join/leave button if on this board
-        if (board.name === currentBoardName && joinLeaveBtn) {
-          updateJoinLeaveButtonText();
-        }
+      if (myBoardIDs.has(board.boardID)) {
+        myBoardsList.appendChild(li);
+      } else {
+        const joinLi = document.createElement("li");
+        const joinLink = document.createElement("a");
+        joinLink.href = "#";
+        joinLink.textContent = `→ ${board.boardName}`;
+        joinLink.addEventListener("click", () => openBoard(board.boardID));
+        joinLi.appendChild(joinLink);
+        availableBoardsList.appendChild(joinLi);
       }
-    }
+    });
+  }
 
-    function openBoard(name) {
-      localStorage.setItem("currentBoard", name);
-      window.location.href = "index.html";
-    }
-
-    createBoardBtn?.addEventListener("click", openCreateBoardModal);
-    renderSidebar();
+  function openBoard(boardID) {
+    localStorage.setItem("currentBoardID", boardID);
+    window.location.href = "index.html";
   }
 
   // -----------------------
-  // POSTS (only if postsContainer exists)
+  // CREATE BOARD MODAL
   // -----------------------
-  if (postsContainer) {
-    const titleEl = document.getElementById("currentBoardTitle");
+  function openCreateBoardModal() {
+    createBoardOverlay.style.display = "flex";
+  }
+  function closeCreateBoardModal() {
+    createBoardOverlay.style.display = "none";
+    createBoardForm?.reset();
+  }
 
-    if (titleEl) {
-      titleEl.textContent = currentBoardName;
+  createBoardBtn?.addEventListener("click", openCreateBoardModal);
+
+  // Close create board modal cancel button
+  createBoardOverlay?.querySelector(".cancel-btn")?.addEventListener("click", closeCreateBoardModal);
+
+  createBoardForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = boardNameInput.value.trim();
+    if (!name) return;
+
+    try {
+      const res = await fetch(`${API}/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ boardName: name, creatorID: loggedInUserID }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Failed to create board'); return; }
+
+      // Refresh board list and sidebar
+      await loadBoards();
+      renderSidebar();
+      closeCreateBoardModal();
+    } catch (err) {
+      alert('Could not connect to server.');
+      console.error(err);
     }
+  });
 
-    function renderPosts() {
-      postsContainer.innerHTML = "";
-      currentBoard.posts.forEach((post) => {
-        const postDiv = document.createElement("div");
-        postDiv.classList.add("post");
-        postDiv.innerHTML = `
+  // -----------------------
+  // POSTS
+  // -----------------------
+  async function renderPosts() {
+    if (!postsContainer || !currentBoard) return;
+
+    const titleEl = document.getElementById("currentBoardTitle");
+    if (titleEl) titleEl.textContent = currentBoard.boardName;
+
+    const res = await fetch(`${API}/boards/${currentBoard.boardID}/posts`);
+    const posts = await res.json();
+
+    postsContainer.innerHTML = "";
+    posts.forEach(post => {
+      const postDiv = document.createElement("div");
+      postDiv.classList.add("post");
+      postDiv.innerHTML = `
         <div class="post-text">
           <h4>${post.title}</h4>
           <p>${post.body}</p>
         </div>
         <div class="post-meta">
-          <span>💬 ${post.comments.length} comments</span>
+          <span>💬 ${post.commentCount} comments</span>
           <span>👍 ${post.likes} likes</span>
         </div>
       `;
-        postDiv.addEventListener("click", () => openViewModal(post));
-        postsContainer.appendChild(postDiv);
+      postDiv.addEventListener("click", () => openViewModal(post));
+      postsContainer.appendChild(postDiv);
+    });
+  }
+
+  // -----------------------
+  // POST MODAL (create)
+  // -----------------------
+  const modalOverlay = document.getElementById("modalOverlay");
+  const postForm = document.getElementById("postForm");
+
+  document.querySelector(".post-btn")?.addEventListener("click", () => {
+    modalOverlay.style.display = "flex";
+  });
+
+  document.querySelector("#modalOverlay .cancel-btn")?.addEventListener("click", () => {
+    modalOverlay.style.display = "none";
+    postForm?.reset();
+  });
+
+  postForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = document.getElementById("postTitle").value;
+    const body = document.getElementById("postBody").value;
+
+    try {
+      const res = await fetch(`${API}/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          boardID: currentBoard.boardID,
+          authorID: loggedInUserID,
+          title,
+          content: body,
+        }),
       });
-    }
+      if (!res.ok) { const d = await res.json(); alert(d.error); return; }
 
-    renderPosts();
-
-    // -----------------------
-    // POST MODAL
-    // -----------------------
-    const modalOverlay = document.getElementById("modalOverlay");
-    const postForm = document.getElementById("postForm");
-
-    function openModal() {
-      modalOverlay.style.display = "flex";
-    }
-    function closeModal() {
       modalOverlay.style.display = "none";
-    }
-
-    document
-      .querySelector("#modalOverlay .cancel-btn")
-      ?.addEventListener("click", () => {
-        closeModal();
-        postForm.reset();
-      });
-
-    document.querySelector(".post-btn")?.addEventListener("click", openModal);
-
-    postForm?.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const title = document.getElementById("postTitle").value;
-      const body = document.getElementById("postBody").value;
-      currentBoard.posts.push({
-        title,
-        body,
-        hearts: 0,
-        likes: 0,
-        comments: [],
-      });
-      saveBoards();
-      renderPosts();
-      closeModal();
       postForm.reset();
+      await renderPosts();
+    } catch (err) {
+      alert('Could not connect to server.');
+      console.error(err);
+    }
+  });
+
+  // -----------------------
+  // VIEW POST MODAL
+  // -----------------------
+  const viewModal = document.getElementById("viewModal");
+  const viewTitle = document.getElementById("viewTitle");
+  const viewBody = document.getElementById("viewBody");
+  const commentList = document.getElementById("commentList");
+  const newComment = document.getElementById("newComment");
+  const heartBtn = document.getElementById("heartBtn");
+  const likeBtn = document.getElementById("likeBtn");
+  const addCommentBtn = document.getElementById("addCommentBtn");
+
+  async function openViewModal(post) {
+    currentPost = post;
+    viewTitle.innerText = post.title;
+    viewBody.innerText = post.body;
+    document.getElementById("heartCount").innerText = post.hearts;
+    document.getElementById("likeCount").innerText = post.likes;
+
+    // Load replies from API
+    const res = await fetch(`${API}/posts/${post.postID}/replies`);
+    const replies = await res.json();
+    commentList.innerHTML = "";
+    replies.forEach(r => {
+      const p = document.createElement("p");
+      p.innerText = `${r.authorName}: ${r.content}`;
+      commentList.appendChild(p);
     });
 
-    // -----------------------
-    // VIEW POST MODAL
-    // -----------------------
-    const viewModal = document.getElementById("viewModal");
-    const viewTitle = document.getElementById("viewTitle");
-    const viewBody = document.getElementById("viewBody");
-    const commentList = document.getElementById("commentList");
-    const newComment = document.getElementById("newComment");
-    const heartBtn = document.getElementById("heartBtn");
-    const likeBtn = document.getElementById("likeBtn");
-    const addCommentBtn = document.getElementById("addCommentBtn");
+    viewModal.style.display = "flex";
+  }
 
-    function openViewModal(post) {
-      currentPost = post;
-      viewTitle.innerText = post.title;
-      viewBody.innerText = post.body;
+  function closeViewModal() {
+    viewModal.style.display = "none";
+  }
 
-      document.getElementById("heartCount").innerText = post.hearts;
-      document.getElementById("likeCount").innerText = post.likes;
+  document.querySelector("#viewModal .cancel-btn")?.addEventListener("click", closeViewModal);
 
-      commentList.innerHTML = "";
-      post.comments.forEach((c) => {
-        const p = document.createElement("p");
-        p.innerText = c;
-        commentList.appendChild(p);
+  // Make closeViewModal available for the inline onclick in index.html
+  window.closeViewModal = closeViewModal;
+
+  // -----------------------
+  // REACTIONS
+  // -----------------------
+  heartBtn?.addEventListener("click", async () => {
+    if (!currentPost) return;
+    await fetch(`${API}/posts/${currentPost.postID}/heart`, { method: 'POST' });
+    currentPost.hearts++;
+    document.getElementById("heartCount").innerText = currentPost.hearts;
+    await renderPosts();
+  });
+
+  likeBtn?.addEventListener("click", async () => {
+    if (!currentPost) return;
+    await fetch(`${API}/posts/${currentPost.postID}/like`, { method: 'POST' });
+    currentPost.likes++;
+    document.getElementById("likeCount").innerText = currentPost.likes;
+    await renderPosts();
+  });
+
+  // -----------------------
+  // COMMENTS
+  // -----------------------
+  addCommentBtn?.addEventListener("click", async () => {
+    if (!currentPost) return;
+    const comment = newComment.value.trim();
+    if (!comment) return;
+
+    try {
+      const res = await fetch(`${API}/posts/${currentPost.postID}/replies`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authorID: loggedInUserID, content: comment }),
       });
+      if (!res.ok) { const d = await res.json(); alert(d.error); return; }
 
-      viewModal.style.display = "flex";
-    }
-
-    function closeViewModal() {
-      viewModal.style.display = "none";
-    }
-
-    document
-      .querySelector("#viewModal .cancel-btn")
-      ?.addEventListener("click", closeViewModal);
-
-    // -----------------------
-    // REACTIONS
-    // -----------------------
-    heartBtn?.addEventListener("click", () => {
-      if (!currentPost) return;
-      currentPost.hearts++;
-      saveBoards();
-      renderPosts();
-      openViewModal(currentPost);
-    });
-
-    likeBtn?.addEventListener("click", () => {
-      if (!currentPost) return;
-      currentPost.likes++;
-      saveBoards();
-      renderPosts();
-      openViewModal(currentPost);
-    });
-
-    // -----------------------
-    // COMMENTS
-    // -----------------------
-    addCommentBtn?.addEventListener("click", () => {
-      if (!currentPost) return;
-      const comment = newComment.value.trim();
-      if (!comment) return;
-      currentPost.comments.push(comment);
       newComment.value = "";
-      saveBoards();
-      renderPosts();
-      openViewModal(currentPost);
-    });
-  }
+      // Reload replies in modal
+      await openViewModal(currentPost);
+      await renderPosts();
+    } catch (err) {
+      alert('Could not connect to server.');
+      console.error(err);
+    }
+  });
 
   // -----------------------
-  // JOIN / LEAVE BUTTON
+  // JOIN / LEAVE BOARD
   // -----------------------
-  if (joinLeaveBtn) {
-    function updateJoinLeaveButtonText() {
-      // Hide button if user is the creator or this is "Main Page"
-      if (
-        currentBoard.creator === loggedInUser ||
-        currentBoard.name === "Main Page"
-      ) {
-        joinLeaveBtn.style.display = "none";
-        return;
-      }
-      joinLeaveBtn.style.display = "inline-block";
-      joinLeaveBtn.textContent = currentBoard.joinedUsers.includes(loggedInUser)
-        ? "Leave Board"
-        : "Join Board";
+  function updateJoinLeaveBtn() {
+    if (!joinLeaveBtn || !currentBoard) return;
+    const isFollowing = myBoardIDs.has(currentBoard.boardID);
+    joinLeaveBtn.style.display = "inline-block";
+    joinLeaveBtn.textContent = isFollowing ? "Leave Board" : "Join Board";
+  }
+
+  joinLeaveBtn?.addEventListener("click", async () => {
+    if (!currentBoard) return;
+    const isFollowing = myBoardIDs.has(currentBoard.boardID);
+
+    if (isFollowing) {
+      await fetch(`${API}/users/${loggedInUserID}/follow`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ boardID: currentBoard.boardID }),
+      });
+      myBoardIDs.delete(currentBoard.boardID);
+    } else {
+      await fetch(`${API}/users/${loggedInUserID}/follow`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ boardID: currentBoard.boardID }),
+      });
+      myBoardIDs.add(currentBoard.boardID);
     }
 
-    joinLeaveBtn.onclick = () => {
-      if (currentBoard.joinedUsers.includes(loggedInUser)) {
-        currentBoard.joinedUsers = currentBoard.joinedUsers.filter(
-          (u) => u !== loggedInUser,
-        );
-      } else {
-        currentBoard.joinedUsers.push(loggedInUser);
-      }
-      saveBoards();
-      renderSidebar();
-      updateJoinLeaveButtonText();
-    };
+    renderSidebar();
+    updateJoinLeaveBtn();
+  });
 
-    updateJoinLeaveButtonText();
-  }
   // -----------------------
   // THEME TOGGLE
   // -----------------------
   const toggleBtn = document.getElementById("themeToggle");
-
   if (toggleBtn) {
     if (localStorage.getItem("theme") === "dark") {
       document.body.classList.add("dark");
       toggleBtn.textContent = "🌙";
     }
-
     toggleBtn.addEventListener("click", () => {
       document.body.classList.toggle("dark");
-
-      if (document.body.classList.contains("dark")) {
-        localStorage.setItem("theme", "dark");
-        toggleBtn.textContent = "🌙";
-      } else {
-        localStorage.setItem("theme", "light");
-        toggleBtn.textContent = "☀️";
-      }
+      const isDark = document.body.classList.contains("dark");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+      toggleBtn.textContent = isDark ? "🌙" : "☀️";
     });
   }
+
+  // -----------------------
+  // INIT — load everything then render
+  // -----------------------
+  await loadBoards();
+  await resolveCurrentBoard();
+  renderSidebar();
+  updateJoinLeaveBtn();
+  if (postsContainer) await renderPosts();
 });

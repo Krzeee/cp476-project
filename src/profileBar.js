@@ -1,12 +1,17 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const loggedInUser = localStorage.getItem("loggedInUser");
-  if (!loggedInUser) return; // no user logged in
+document.addEventListener("DOMContentLoaded", async () => {
+  const loggedInUserID = Number(localStorage.getItem("loggedInUserID"));
+  if (!loggedInUserID) return;
 
   const topProfilePic = document.getElementById("topProfilePic");
-  const picKey = `pic_${loggedInUser}`;
+  if (!topProfilePic) return;
 
-  const savedPic = localStorage.getItem(picKey);
-  if (savedPic) {
-    topProfilePic.src = savedPic;
+  try {
+    const res = await fetch(`http://localhost:3000/users/${loggedInUserID}/profile`);
+    if (res.ok) {
+      const profile = await res.json();
+      if (profile.icon) topProfilePic.src = profile.icon;
+    }
+  } catch (err) {
+    console.error('Failed to load profile pic:', err);
   }
 });
