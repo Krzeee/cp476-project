@@ -1,4 +1,4 @@
-# cp476-project
+# cp476-project: BoardUp
 Group 12 CP476 project
 
 Online Discussion Board / Forum
