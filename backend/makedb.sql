@@ -10,9 +10,12 @@ CREATE TABLE users (
 CREATE TABLE boards (
   boardID INT AUTO_INCREMENT PRIMARY KEY,
   boardName VARCHAR(50) NOT NULL UNIQUE,
-  creatorID INT,
+  creatorID INT NULL,
   FOREIGN KEY (creatorID) REFERENCES users(userID)
 );
+
+-- Default system board, always exists
+INSERT INTO boards (boardName, creatorID) VALUES ('Main Page', NULL);
 
 CREATE TABLE posts (
   postID INT AUTO_INCREMENT PRIMARY KEY,
@@ -40,7 +43,7 @@ CREATE TABLE replies (
 CREATE TABLE profiles (
   userID INT PRIMARY KEY,
   content TEXT,
-  icon VARCHAR(255), -- URL/filepath to img
+  icon MEDIUMTEXT,
   FOREIGN KEY (userID) REFERENCES users(userID)
 );
 

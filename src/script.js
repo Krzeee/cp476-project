@@ -20,12 +20,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "login.html";
   });
 
+  // If we're not on index.html (e.g. on profile.html), stop here.
+  const createBoardBtn = document.getElementById("createBoardBtn");
+  if (!createBoardBtn) return;
+
   // -----------------------
   // DOM ELEMENTS
   // -----------------------
   const myBoardsList = document.getElementById("myBoards");
   const availableBoardsList = document.getElementById("availableBoards");
-  const createBoardBtn = document.getElementById("createBoardBtn");
   const postsContainer = document.getElementById("postsContainer");
   const joinLeaveBtn = document.getElementById("joinLeaveBtn");
   const createBoardOverlay = document.getElementById("createBoardOverlay");
@@ -33,13 +36,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const boardNameInput = document.getElementById("boardNameInput");
 
   // -----------------------
-  // LOAD ALL BOARDS + USER'S FOLLOWED BOARDS
+  // STATE
   // -----------------------
   let allBoards = [];
   let myBoardIDs = new Set();
-  let currentBoard = null; // { boardID, boardName }
-  let currentPost = null;  // post object from API
+  let currentBoard = null;
+  let currentPost = null;
 
+  // -----------------------
+  // LOAD BOARDS
+  // -----------------------
   async function loadBoards() {
     const [allRes, myRes] = await Promise.all([
       fetch(`${API}/boards`),
@@ -51,23 +57,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // -----------------------
-  // CURRENT BOARD
+  // RESOLVE CURRENT BOARD
   // -----------------------
-  // Stored as boardID in localStorage so it survives page navigations
-  async function resolveCurrentBoard() {
-    let storedBoardID = Number(localStorage.getItem("currentBoardID"));
+  function resolveCurrentBoard() {
+    const mainPage = allBoards.find(b => b.boardName === 'Main Page');
+    const storedBoardID = Number(localStorage.getItem("currentBoardID"));
 
-    if (!storedBoardID && allBoards.length > 0) {
-      // Default to first board (Main Page equivalent)
-      storedBoardID = allBoards[0].boardID;
-      localStorage.setItem("currentBoardID", storedBoardID);
+    if (!storedBoardID) {
+      currentBoard = mainPage || allBoards[0] || null;
+    } else {
+      currentBoard = allBoards.find(b => b.boardID === storedBoardID) || mainPage || allBoards[0] || null;
     }
 
-    currentBoard = allBoards.find(b => b.boardID === storedBoardID) || allBoards[0] || null;
+    if (currentBoard) {
+      localStorage.setItem("currentBoardID", currentBoard.boardID);
+    }
   }
 
   // -----------------------
   // SIDEBAR
+  // Renders Main Page pinned at the top always, then other joined boards,
+  // then boards the user can join.
   // -----------------------
   function renderSidebar() {
     if (!myBoardsList || !availableBoardsList) return;
@@ -75,12 +85,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     myBoardsList.innerHTML = "";
     availableBoardsList.innerHTML = "";
 
-    allBoards.forEach(board => {
+    const mainPage = allBoards.find(b => b.boardName === 'Main Page');
+    const otherBoards = allBoards.filter(b => b.boardName !== 'Main Page');
+
+    // Always pin Main Page at the top of "Boards"
+    if (mainPage) {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = "#";
+      link.textContent = "Main Page";
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        openBoard(mainPage.boardID);
+      });
+      li.appendChild(link);
+      myBoardsList.appendChild(li);
+    }
+
+    // All other boards split into joined vs available
+    otherBoards.forEach(board => {
       const li = document.createElement("li");
       const link = document.createElement("a");
       link.href = "#";
       link.textContent = board.boardName;
-      link.addEventListener("click", () => openBoard(board.boardID));
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        openBoard(board.boardID);
+      });
       li.appendChild(link);
 
       if (myBoardIDs.has(board.boardID)) {
@@ -90,7 +121,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         const joinLink = document.createElement("a");
         joinLink.href = "#";
         joinLink.textContent = `→ ${board.boardName}`;
-        joinLink.addEventListener("click", () => openBoard(board.boardID));
+        joinLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          openBoard(board.boardID);
+        });
         joinLi.appendChild(joinLink);
         availableBoardsList.appendChild(joinLi);
       }
@@ -113,9 +147,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     createBoardForm?.reset();
   }
 
-  createBoardBtn?.addEventListener("click", openCreateBoardModal);
-
-  // Close create board modal cancel button
+  createBoardBtn.addEventListener("click", openCreateBoardModal);
   createBoardOverlay?.querySelector(".cancel-btn")?.addEventListener("click", closeCreateBoardModal);
 
   createBoardForm?.addEventListener("submit", async (e) => {
@@ -132,7 +164,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       const data = await res.json();
       if (!res.ok) { alert(data.error || 'Failed to create board'); return; }
 
-      // Refresh board list and sidebar
       await loadBoards();
       renderSidebar();
       closeCreateBoardModal();
@@ -151,30 +182,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     const titleEl = document.getElementById("currentBoardTitle");
     if (titleEl) titleEl.textContent = currentBoard.boardName;
 
-    const res = await fetch(`${API}/boards/${currentBoard.boardID}/posts`);
-    const posts = await res.json();
+    try {
+      const res = await fetch(`${API}/boards/${currentBoard.boardID}/posts`);
+      const posts = await res.json();
 
-    postsContainer.innerHTML = "";
-    posts.forEach(post => {
-      const postDiv = document.createElement("div");
-      postDiv.classList.add("post");
-      postDiv.innerHTML = `
-        <div class="post-text">
-          <h4>${post.title}</h4>
-          <p>${post.body}</p>
-        </div>
-        <div class="post-meta">
-          <span>💬 ${post.commentCount} comments</span>
-          <span>👍 ${post.likes} likes</span>
-        </div>
-      `;
-      postDiv.addEventListener("click", () => openViewModal(post));
-      postsContainer.appendChild(postDiv);
-    });
+      postsContainer.innerHTML = "";
+      posts.forEach(post => {
+        const postDiv = document.createElement("div");
+        postDiv.classList.add("post");
+        postDiv.innerHTML = `
+          <div class="post-text">
+            <h4>${post.title}</h4>
+            <p>${post.body}</p>
+          </div>
+          <div class="post-meta">
+            <span>💬 ${post.commentCount} comments</span>
+            <span>👍 ${post.likes} likes</span>
+          </div>
+        `;
+        postDiv.addEventListener("click", () => openViewModal(post));
+        postsContainer.appendChild(postDiv);
+      });
+    } catch (err) {
+      console.error('Failed to load posts:', err);
+    }
   }
 
   // -----------------------
-  // POST MODAL (create)
+  // CREATE POST MODAL
   // -----------------------
   const modalOverlay = document.getElementById("modalOverlay");
   const postForm = document.getElementById("postForm");
@@ -234,15 +269,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("heartCount").innerText = post.hearts;
     document.getElementById("likeCount").innerText = post.likes;
 
-    // Load replies from API
-    const res = await fetch(`${API}/posts/${post.postID}/replies`);
-    const replies = await res.json();
-    commentList.innerHTML = "";
-    replies.forEach(r => {
-      const p = document.createElement("p");
-      p.innerText = `${r.authorName}: ${r.content}`;
-      commentList.appendChild(p);
-    });
+    try {
+      const res = await fetch(`${API}/posts/${post.postID}/replies`);
+      const replies = await res.json();
+      commentList.innerHTML = "";
+      replies.forEach(r => {
+        const p = document.createElement("p");
+        p.innerText = `${r.authorName}: ${r.content}`;
+        commentList.appendChild(p);
+      });
+    } catch (err) {
+      console.error('Failed to load replies:', err);
+    }
 
     viewModal.style.display = "flex";
   }
@@ -252,8 +290,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   document.querySelector("#viewModal .cancel-btn")?.addEventListener("click", closeViewModal);
-
-  // Make closeViewModal available for the inline onclick in index.html
   window.closeViewModal = closeViewModal;
 
   // -----------------------
@@ -292,7 +328,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!res.ok) { const d = await res.json(); alert(d.error); return; }
 
       newComment.value = "";
-      // Reload replies in modal
       await openViewModal(currentPost);
       await renderPosts();
     } catch (err) {
@@ -303,25 +338,35 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // -----------------------
   // JOIN / LEAVE BOARD
+  // Main Page is always pinned — hide the button for it
   // -----------------------
   function updateJoinLeaveBtn() {
     if (!joinLeaveBtn || !currentBoard) return;
-    const isFollowing = myBoardIDs.has(currentBoard.boardID);
+
+    if (currentBoard.boardName === 'Main Page') {
+      joinLeaveBtn.style.display = "none";
+      return;
+    }
+
     joinLeaveBtn.style.display = "inline-block";
-    joinLeaveBtn.textContent = isFollowing ? "Leave Board" : "Join Board";
+    joinLeaveBtn.textContent = myBoardIDs.has(currentBoard.boardID) ? "Leave Board" : "Join Board";
   }
 
   joinLeaveBtn?.addEventListener("click", async () => {
-    if (!currentBoard) return;
+    if (!currentBoard || currentBoard.boardName === 'Main Page') return;
     const isFollowing = myBoardIDs.has(currentBoard.boardID);
 
     if (isFollowing) {
-      await fetch(`${API}/users/${loggedInUserID}/follow`, {
+      const res = await fetch(`${API}/users/${loggedInUserID}/follow`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ boardID: currentBoard.boardID }),
       });
+      if (!res.ok) { const d = await res.json(); alert(d.error); return; }
       myBoardIDs.delete(currentBoard.boardID);
+      // Navigate back to Main Page after leaving
+      const mainPage = allBoards.find(b => b.boardName === 'Main Page');
+      if (mainPage) openBoard(mainPage.boardID);
     } else {
       await fetch(`${API}/users/${loggedInUserID}/follow`, {
         method: 'POST',
@@ -353,11 +398,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // -----------------------
-  // INIT — load everything then render
+  // INIT
   // -----------------------
   await loadBoards();
-  await resolveCurrentBoard();
+  resolveCurrentBoard();
   renderSidebar();
   updateJoinLeaveBtn();
-  if (postsContainer) await renderPosts();
+  await renderPosts();
 });

@@ -26,11 +26,19 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
+// --- Ensure "Main Page" board always exists ---
+async function ensureMainPage() {
+  const [rows] = await pool.query('SELECT boardID FROM boards WHERE boardName = ?', ['Main Page']);
+  if (rows.length === 0) {
+    await pool.query('INSERT INTO boards (boardName, creatorID) VALUES (?, NULL)', ['Main Page']);
+    console.log('Created default "Main Page" board.');
+  }
+}
+
 // --- Express app ---
 const app = express();
 app.use(express.json());
 
-// Allow requests from the frontend (adjust origin as needed)
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -49,13 +57,17 @@ app.post('/register', async (req, res) => {
   const { username, passwordHash } = req.body;
   try {
     const id = await registerUser(username, passwordHash, pool);
+    // Auto-follow Main Page for every new user
+    const [rows] = await pool.query('SELECT boardID FROM boards WHERE boardName = ?', ['Main Page']);
+    if (rows.length > 0) {
+      await followBoard(id, rows[0].boardID, pool);
+    }
     res.json({ userID: id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Login: looks up the user by username and verifies the password hash
 app.post('/login', async (req, res) => {
   const { username, passwordHash } = req.body;
   try {
@@ -70,6 +82,11 @@ app.post('/login', async (req, res) => {
     if (user.passwordHash !== passwordHash) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
+    // Ensure user follows Main Page (handles accounts created before this fix)
+    const [mainRows] = await pool.query('SELECT boardID FROM boards WHERE boardName = ?', ['Main Page']);
+    if (mainRows.length > 0) {
+      await followBoard(user.userID, mainRows[0].boardID, pool);
+    }
     res.json({ userID: user.userID, username: user.username });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -78,22 +95,21 @@ app.post('/login', async (req, res) => {
 
 // --- Boards ---
 
-app.post('/boards', async (req, res) => {
-  const { boardName, creatorID } = req.body;
+app.get('/boards', async (req, res) => {
   try {
-    const id = await addBoard(boardName, creatorID, pool);
-    // Creator automatically follows their own board
-    await followBoard(creatorID, id, pool);
-    res.json({ boardID: id });
+    const boards = await getBoards(pool);
+    res.json(boards);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get('/boards', async (req, res) => {
+app.post('/boards', async (req, res) => {
+  const { boardName, creatorID } = req.body;
   try {
-    const boards = await getBoards(pool);
-    res.json(boards);
+    const id = await addBoard(boardName, creatorID, pool);
+    await followBoard(creatorID, id, pool);
+    res.json({ boardID: id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -175,10 +191,15 @@ app.post('/users/:userID/follow', async (req, res) => {
   }
 });
 
+// Leaving a board — Main Page is protected, can never be left
 app.delete('/users/:userID/follow', async (req, res) => {
   const { userID } = req.params;
   const { boardID } = req.body;
   try {
+    const [rows] = await pool.query('SELECT boardName FROM boards WHERE boardID = ?', [boardID]);
+    if (rows.length > 0 && rows[0].boardName === 'Main Page') {
+      return res.status(400).json({ error: 'You cannot leave the Main Page board.' });
+    }
     await pool.query(
       'DELETE FROM boardFollow WHERE userID = ? AND boardID = ?',
       [Number(userID), boardID]
@@ -221,8 +242,13 @@ app.get('/users/:userID/boards', async (req, res) => {
   }
 });
 
-// start server
+// --- Start server ---
 const port = 3000;
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Server listening on port ${port}`);
+  try {
+    await ensureMainPage();
+  } catch (err) {
+    console.error('Warning: could not ensure Main Page board:', err.message);
+  }
 });
