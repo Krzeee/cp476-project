@@ -24,7 +24,7 @@ async function makePost(boardID, authorID, title, content, db) {
 
 async function replyToPost(postID, authorID, content, db) {
     const [result] = await db.query(
-        'INSERT INTO replies (postID, author, content) VALUES (?, ?, ?)',
+        'INSERT INTO replies (postID, authorID, content) VALUES (?, ?, ?)',
         [postID, authorID, content]
     );
     return result.insertId;
