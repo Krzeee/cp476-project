@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Board Layout</title>
+    <title>Profile</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -56,7 +56,7 @@
             </a>
           </div>
         </div>
-        <div id="postsContainer" style="display: none"></div>
+
         <!-- Profile Section -->
         <section class="profile-section">
           <div class="profile-header">
@@ -64,25 +64,19 @@
               src="default-avatar.png"
               alt="Profile Picture"
               class="profile-pic"
+              id="profilePicDisplay"
             />
 
             <div class="profile-info">
               <h2 class="username" id="usernameDisplay">@username</h2>
-
-              <span class="edit-icon" title="Edit profile"> ✏️ </span>
-
-              <!-- Bio display -->
-              <p id="bioText" class="bio-text">
-                This is a short bio about the user.
-              </p>
+              <span class="edit-icon" id="editIcon" title="Edit profile">✏️</span>
+              <p id="bioText" class="bio-text">This is a short bio about the user.</p>
             </div>
           </div>
         </section>
       </main>
     </div>
 
-    <script src="profileBar.js"></script>
-    <script src="script.js"></script>
     <script src="profile.js"></script>
     <script src="theme.js"></script>
   </body>
