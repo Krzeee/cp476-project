@@ -38,3 +38,48 @@
 - Create and added database skeleton for minimal storage
 - Finished database design package
 - Fixed issue where profile page could not access boards or load board on left bar
+
+## 2026/04/01 (30 minutes)
+
+- Began working on database functionality and functions
+- Started PDF containing testing
+- Started slide presentation
+
+## 2026/04/05 (1 hour)
+
+- Added themes and buttons to swap between light and dark
+- Finished slides & testing report
+- Finished database & hooked up to front-end for storing rather than local storage
+- Updated stylesheet
+
+## SUMMARY
+
+- Able to create functional website with multiple pages, users and data all synced to database
+- Consistent styling and updating across pages
+- JS, CSS, HTML, SQL, DOCKER, GITHUB, MYSQL all used are developped with throughout term
+
+## Major Decisions
+
+- Adding user profiles was a major part of our decision, as it allows users to feel more unique with customization
+- Removing images from database storage due to both time constraints and veracity
+- Allowing users to leave and join groups rather than be forced to view all of the groups made, helps with individuality for users
+  and reduces load on database for storing information
+
+## Contribution Evidence
+
+- Derek
+  - Create User profiles
+  - Added ability to join and remove boards
+  - Theme swapping
+  - Added board creation and updated post creation
+  - Stylesheet information
+- Nanditha
+  - Authentication, creation and login page created
+  - Synced database to front-end
+  - Created presentation slides
+  - Created testing report
+  - Created post creation
+- Trenton
+  - Created database skeleton
+  - Implemented docker environment
+  - Created entire backend db.js and index.js

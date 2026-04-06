@@ -433,3 +433,8 @@ body {
 #themeToggle:focus {
   outline: none;
 }
+
+.logo-img {
+  max-width: 150px;
+  height: auto;
+}
